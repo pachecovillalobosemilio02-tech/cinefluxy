@@ -1,13 +1,11 @@
 // v2
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Home from './pages/Home'
-import Booking from './pages/Booking'
-import Confirmation from './pages/Confirmation'
+import Login from './pages/login'
+import Register from './pages/register'
+import Home from './pages/home'
+import Booking from './pages/booking'
+import Confirmation from './pages/confirmation'
 import Navbar from './component/navbar'
-import Loader from './component/Loader'
+import Loader from './component/loader'
 
 export default function App() {
   const [user, setUser] = useState(null)
