@@ -4,7 +4,7 @@ import Home from './pages/Home'
 import Booking from './pages/Booking'
 import Confirmation from './pages/Confirmation'
 import Navbar from './component/navbar_new'
-import Loader from './component/loader'
+import Loader from './component/Loader'
 
 export default function App() {
   const [user, setUser] = useState(null)
