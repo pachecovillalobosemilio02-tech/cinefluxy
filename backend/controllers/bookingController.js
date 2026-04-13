@@ -14,11 +14,15 @@ const transporter = nodemailer.createTransport({
 const createBooking = async (req, res) => {
   const conn = await db.getConnection()
   try {
-    const { movieId, seats, showtime, total } = req.body
+    const { movieId, seats, showtime, total, deliveryEmail } = req.body
     const userId = req.user.id
 
     if (!movieId || !seats?.length || !showtime || !total) {
       return res.status(400).json({ message: 'Datos de reserva incompletos.' })
+    }
+
+    if (deliveryEmail && !/\S+@\S+\.\S+/.test(deliveryEmail)) {
+      return res.status(400).json({ message: 'El correo para enviar el ticket no es valido.' })
     }
 
     await conn.beginTransaction()
@@ -48,16 +52,18 @@ const createBooking = async (req, res) => {
 
     const [userRow] = await db.query('SELECT name, email FROM users WHERE id = ?', [userId])
     const user = userRow[0]
+    const recipientEmail = deliveryEmail || user.email
 
     try {
       await transporter.sendMail({
         from: `CineMax <${process.env.EMAIL_USER}>`,
-        to: user.email,
+        to: recipientEmail,
         subject: `Tu ticket CineMax - ${ticketId}`,
         html: `
           <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#0e0e1a;color:#e8e8f0;padding:2rem;border-radius:12px;">
             <h2 style="color:#c9a84c;font-size:1.6rem;margin-bottom:0.5rem;">CineMax</h2>
             <p style="color:#6b6b80;margin-bottom:1.5rem;">Tu compra fue procesada exitosamente.</p>
+            <p><strong>Destinatario:</strong> ${recipientEmail}</p>
             <p><strong>Ticket ID:</strong> ${ticketId}</p>
             <p><strong>Horario:</strong> ${showtime}</p>
             <p><strong>Asientos:</strong> ${seats.map(s => s.id).join(', ')}</p>
@@ -74,7 +80,7 @@ const createBooking = async (req, res) => {
       console.error('Error enviando email:', emailErr.message)
     }
 
-    res.status(201).json({ ticketId, bookingId, expiresAt, qrCode: qrImage })
+    res.status(201).json({ ticketId, bookingId, expiresAt, qrCode: qrImage, deliveryEmail: recipientEmail })
   } catch (err) {
     await conn.rollback()
     console.error(err)

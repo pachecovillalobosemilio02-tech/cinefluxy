@@ -25,11 +25,12 @@ export default function Confirmation() {
     )
   }
 
-  const { booking, movie, selected, showtime, total, user } = state
+  const { booking, movie, selected, showtime, total, user, deliveryEmail } = state
   const ticketId = booking?.ticketId || 'CX-' + Math.random().toString(36).slice(2, 9).toUpperCase()
   const qrData = `${ticketId}|${movie.title}|${showtime}|${selected.map(s => s.id).join(',')}`
   const expiry = new Date()
   expiry.setHours(expiry.getHours() + 4)
+  const sentTo = booking?.deliveryEmail || deliveryEmail || user?.email
 
   return (
     <div style={{ paddingTop: '80px', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 2rem 4rem' }}>
@@ -39,7 +40,7 @@ export default function Confirmation() {
             OK
           </div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', letterSpacing: '0.06em', marginBottom: '0.4rem' }}>Compra Exitosa</div>
-          <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>Tu ticket ha sido enviado a {user?.email}</div>
+          <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>Tu ticket ha sido enviado a {sentTo}</div>
         </div>
         <div style={{ padding: '2rem 2.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', background: 'rgba(6,214,160,0.06)', border: '1px solid rgba(6,214,160,0.15)', borderRadius: '6px', padding: '0.7rem 1rem', marginBottom: '1.5rem', fontSize: '0.78rem' }}>

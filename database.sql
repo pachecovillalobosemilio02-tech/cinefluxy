@@ -7,6 +7,9 @@ CREATE TABLE users (
   email VARCHAR(150) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
   birth_date DATE NOT NULL,
+  location_label VARCHAR(255) NULL,
+  latitude DECIMAL(10, 7) NULL,
+  longitude DECIMAL(10, 7) NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -67,3 +70,7 @@ INSERT INTO showtimes (movie_id, time) VALUES
 (4, '12:30'), (4, '15:45'), (4, '19:00'), (4, '22:30'),
 (5, '16:00'), (5, '20:00'), (5, '23:30'),
 (6, '11:00'), (6, '13:30'), (6, '16:00'), (6, '18:30');
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS location_label VARCHAR(255) NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS latitude DECIMAL(10, 7) NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS longitude DECIMAL(10, 7) NULL;

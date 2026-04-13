@@ -1,14 +1,4 @@
-require('dotenv').config({ path: __dirname + '/.env' })
-console.log('PASSWORD:', JSON.stringify(process.env.DB_PASSWORD))
-
-require('dotenv').config({ path: __dirname + '/.env' })
 require('dotenv').config()
-console.log('DB Config:', {
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  database: process.env.DB_NAME
-})
 const express = require('express')
 const cors = require('cors')
 const authRoutes = require('./routes/auth')
@@ -16,12 +6,24 @@ const moviesRoutes = require('./routes/movies')
 const bookingRoutes = require('./routes/booking')
 
 const app = express()
+const allowedOrigins = [
+  'http://localhost:3000',
+  process.env.FRONTEND_URL,
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null
+].filter(Boolean)
 
-app.use(cors({ 
-  origin: ['http://localhost:3000', 'https://cinefluxy.vercel.app'], 
-  credentials: true 
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true)
+    return callback(new Error('Origen no permitido por CORS'))
+  },
+  credentials: true
 }))
 app.use(express.json())
+
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true })
+})
 
 app.use('/api/auth', authRoutes)
 app.use('/api/movies', moviesRoutes)

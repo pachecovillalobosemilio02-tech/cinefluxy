@@ -14,6 +14,7 @@ export default function Booking({ user }) {
   const [showtime, setShowtime] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [deliveryEmail, setDeliveryEmail] = useState(user?.email || '')
 
   useEffect(() => {
     moviesService.getById(movieId)
@@ -29,6 +30,10 @@ export default function Booking({ user }) {
 
   const handleConfirm = async () => {
     if (!selected.length) return
+    if (!deliveryEmail || !/\S+@\S+\.\S+/.test(deliveryEmail)) {
+      setError('Ingresa un correo valido para enviar el ticket.')
+      return
+    }
     setSubmitting(true)
     setError('')
     try {
@@ -36,9 +41,10 @@ export default function Booking({ user }) {
         movieId: movie.id,
         seats: selected.map(s => ({ id: s.id, type: s.type })),
         showtime,
-        total
+        total,
+        deliveryEmail
       })
-      navigate('/confirmation', { state: { booking: res.data, movie, selected, showtime, total, user } })
+      navigate('/confirmation', { state: { booking: res.data, movie, selected, showtime, total, user, deliveryEmail } })
     } catch (e) {
       setError(e.response?.data?.message || 'Error al procesar la compra.')
     } finally {
@@ -95,6 +101,21 @@ export default function Booking({ user }) {
         </div>
         <div>
           <TicketSummary movie={movie} selected={selected} showtime={showtime} total={total} SEAT_PRICES={SEAT_PRICES} />
+          <div style={{ marginTop: '1rem', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '1rem' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: '0.45rem' }}>
+              Correo de entrega
+            </div>
+            <input
+              type="email"
+              value={deliveryEmail}
+              onChange={(e) => setDeliveryEmail(e.target.value)}
+              placeholder="correo@ejemplo.com"
+              style={{ width: '100%', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.7rem 0.9rem', color: 'var(--text)', fontSize: '0.9rem', outline: 'none' }}
+            />
+            <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--muted)' }}>
+              El ticket se enviara a este correo junto con su codigo QR.
+            </div>
+          </div>
           {error && (
             <div style={{ marginTop: '1rem', background: 'rgba(230,57,70,0.1)', border: '1px solid rgba(230,57,70,0.3)', borderRadius: '6px', padding: '0.7rem', fontSize: '0.82rem', color: 'var(--red)' }}>
               {error}

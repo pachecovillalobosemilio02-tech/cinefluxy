@@ -1,17 +1,20 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { authService } from '../services/api'
+import LocationPrompt, { loadStoredLocation } from '../component/LocationPrompt'
 
 export default function Login({ onLogin }) {
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [form, setForm] = useState(() => ({ email: '', password: '', ...(loadStoredLocation() || {}) }))
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+  const setLocation = (location) => setForm(f => ({ ...f, ...location }))
 
   const validate = () => {
     if (!form.email || !form.password) return 'Completa todos los campos.'
     if (!/\S+@\S+\.\S+/.test(form.email)) return 'Email no valido.'
+    if (form.latitude == null || form.longitude == null) return 'Debes compartir tu ubicacion.'
     return null
   }
 
@@ -41,6 +44,7 @@ export default function Login({ onLogin }) {
           Experiencia Premium
         </div>
         <div style={{ fontSize: '1.3rem', fontWeight: 500, marginBottom: '1.5rem' }}>Iniciar Sesion</div>
+        <LocationPrompt value={form} onChange={setLocation} />
         {error && (
           <div style={{ background: 'rgba(230,57,70,0.1)', border: '1px solid rgba(230,57,70,0.3)', borderRadius: '6px', padding: '0.7rem', fontSize: '0.82rem', color: 'var(--red)', marginBottom: '1rem' }}>
             {error}

@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { authService } from '../services/api'
+import LocationPrompt, { loadStoredLocation } from '../component/LocationPrompt'
 
 export default function Register({ onLogin }) {
-  const [form, setForm] = useState({ name: '', email: '', password: '', birth: '' })
+  const [form, setForm] = useState(() => ({ name: '', email: '', password: '', birth: '', ...(loadStoredLocation() || {}) }))
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+  const setLocation = (location) => setForm(f => ({ ...f, ...location }))
 
   const validate = () => {
     if (!form.name.trim()) return 'Ingresa tu nombre.'
@@ -15,6 +17,7 @@ export default function Register({ onLogin }) {
     if (!/\S+@\S+\.\S+/.test(form.email)) return 'Email no valido.'
     if (form.password.length < 6) return 'La contrasena debe tener al menos 6 caracteres.'
     if (!form.birth) return 'Ingresa tu fecha de nacimiento.'
+    if (form.latitude == null || form.longitude == null) return 'Debes compartir tu ubicacion.'
     const age = (new Date() - new Date(form.birth)) / (365.25 * 24 * 3600 * 1000)
     if (age < 18) return 'Debes tener 18 anos o mas para registrarte.'
     return null
@@ -27,7 +30,7 @@ export default function Register({ onLogin }) {
     setLoading(true)
     try {
       const res = await authService.register(form)
-      localStorage.setItem('cinemax_token', res.data.token)
+      localStorage.setItem('cinefluxy_token', res.data.token)
       onLogin(res.data.user)
     } catch (e) {
       setError(e.response?.data?.message || 'Error al registrarse.')
@@ -52,6 +55,7 @@ export default function Register({ onLogin }) {
         <div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '2rem', textTransform: 'uppercase' }}>
           Crear Cuenta
         </div>
+        <LocationPrompt value={form} onChange={setLocation} />
         {error && (
           <div style={{ background: 'rgba(230,57,70,0.1)', border: '1px solid rgba(230,57,70,0.3)', borderRadius: '6px', padding: '0.7rem', fontSize: '0.82rem', color: 'var(--red)', marginBottom: '1rem' }}>
             {error}
