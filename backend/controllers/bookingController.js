@@ -29,6 +29,65 @@ const transporterConfig = process.env.SMTP_HOST
 
 const transporter = nodemailer.createTransport(transporterConfig)
 
+const sendWithBrevoApi = async ({ to, subject, html }) => {
+  const senderEmail = (process.env.EMAIL_FROM || process.env.EMAIL_USER || '').match(/<([^>]+)>/)?.[1] || process.env.EMAIL_USER
+  const senderName = (process.env.EMAIL_FROM || '').match(/^([^<]+)/)?.[1]?.trim() || 'CineFluxy'
+
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': process.env.BREVO_API_KEY
+    },
+    body: JSON.stringify({
+      sender: {
+        name: senderName,
+        email: senderEmail
+      },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html
+    })
+  })
+
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`Brevo API ${response.status}: ${body}`)
+  }
+}
+
+const sendTicketEmail = async ({ to, ticketId, showtime, seats, total, expiresAt, qrImage }) => {
+  const subject = `Tu ticket CineMax - ${ticketId}`
+  const html = `
+    <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#0e0e1a;color:#e8e8f0;padding:2rem;border-radius:12px;">
+      <h2 style="color:#c9a84c;font-size:1.6rem;margin-bottom:0.5rem;">CineMax</h2>
+      <p style="color:#6b6b80;margin-bottom:1.5rem;">Tu compra fue procesada exitosamente.</p>
+      <p><strong>Destinatario:</strong> ${to}</p>
+      <p><strong>Ticket ID:</strong> ${ticketId}</p>
+      <p><strong>Horario:</strong> ${showtime}</p>
+      <p><strong>Asientos:</strong> ${seats.map(s => s.id).join(', ')}</p>
+      <p><strong>Total:</strong> $${total}</p>
+      <p><strong>Valido hasta:</strong> ${expiresAt.toLocaleString('es-MX')}</p>
+      <div style="margin-top:1.5rem;text-align:center;">
+        <img src="${qrImage}" alt="QR Ticket" style="width:160px;height:160px;border-radius:8px;" />
+        <p style="font-size:0.75rem;color:#6b6b80;margin-top:0.5rem;">Presenta este QR al ingresar</p>
+      </div>
+    </div>
+  `
+
+  if (process.env.BREVO_API_KEY) {
+    await sendWithBrevoApi({ to, subject, html })
+    return
+  }
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM || `CineMax <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    html
+  })
+}
+
 const createBooking = async (req, res) => {
   const conn = await db.getConnection()
   try {
@@ -76,27 +135,7 @@ const createBooking = async (req, res) => {
     let emailError = null
 
     try {
-      await transporter.sendMail({
-        from: process.env.EMAIL_FROM || `CineMax <${process.env.EMAIL_USER}>`,
-        to: recipientEmail,
-        subject: `Tu ticket CineMax - ${ticketId}`,
-        html: `
-          <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#0e0e1a;color:#e8e8f0;padding:2rem;border-radius:12px;">
-            <h2 style="color:#c9a84c;font-size:1.6rem;margin-bottom:0.5rem;">CineMax</h2>
-            <p style="color:#6b6b80;margin-bottom:1.5rem;">Tu compra fue procesada exitosamente.</p>
-            <p><strong>Destinatario:</strong> ${recipientEmail}</p>
-            <p><strong>Ticket ID:</strong> ${ticketId}</p>
-            <p><strong>Horario:</strong> ${showtime}</p>
-            <p><strong>Asientos:</strong> ${seats.map(s => s.id).join(', ')}</p>
-            <p><strong>Total:</strong> $${total}</p>
-            <p><strong>Valido hasta:</strong> ${expiresAt.toLocaleString('es-MX')}</p>
-            <div style="margin-top:1.5rem;text-align:center;">
-              <img src="${qrImage}" alt="QR Ticket" style="width:160px;height:160px;border-radius:8px;" />
-              <p style="font-size:0.75rem;color:#6b6b80;margin-top:0.5rem;">Presenta este QR al ingresar</p>
-            </div>
-          </div>
-        `
-      })
+      await sendTicketEmail({ to: recipientEmail, ticketId, showtime, seats, total, expiresAt, qrImage })
       emailSent = true
     } catch (emailErr) {
       console.error('Error enviando email:', emailErr.message)

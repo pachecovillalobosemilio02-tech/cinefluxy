@@ -41,14 +41,14 @@ export default function Confirmation() {
           </div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', letterSpacing: '0.06em', marginBottom: '0.4rem' }}>Compra Exitosa</div>
           <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>
-            {emailSent ? `Tu ticket ha sido enviado a ${sentTo}` : 'Tu compra fue guardada, pero el correo no pudo enviarse en este momento.'}
+            {emailSent ? `Tu ticket fue enviado a ${sentTo}` : 'Tu ticket ya esta listo. Puedes usarlo desde esta pantalla aunque el correo tarde un poco mas.'}
           </div>
         </div>
         <div style={{ padding: '2rem 2.5rem' }}>
           {!emailSent && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', background: 'rgba(244,162,97,0.08)', border: '1px solid rgba(244,162,97,0.24)', borderRadius: '6px', padding: '0.8rem 1rem', marginBottom: '1.2rem', fontSize: '0.8rem', color: 'var(--muted)' }}>
               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f4a261', flexShrink: 0 }} />
-              <span>Guarda este ticket o imprimelo. El sistema no confirmo el envio por correo.</span>
+              <span>Guarda este ticket o imprimelo. El acceso queda respaldado con el codigo QR mostrado aqui.</span>
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', background: 'rgba(6,214,160,0.06)', border: '1px solid rgba(6,214,160,0.15)', borderRadius: '6px', padding: '0.7rem 1rem', marginBottom: '1.5rem', fontSize: '0.78rem' }}>

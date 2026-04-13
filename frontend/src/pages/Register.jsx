@@ -50,7 +50,7 @@ export default function Register({ onLogin }) {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', background: 'radial-gradient(ellipse 80% 80% at 50% -20%, rgba(201,168,76,0.12) 0%, transparent 60%)' }}>
       <div style={{ width: '100%', maxWidth: '420px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '12px', padding: '2.5rem' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', letterSpacing: '0.06em', color: 'var(--accent)', textAlign: 'center', marginBottom: '0.25rem' }}>
-          CINE<span style={{ color: 'var(--text)' }}>MAX</span>
+          CINE<span style={{ color: 'var(--text)' }}>FLUXY</span>
         </div>
         <div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '2rem', textTransform: 'uppercase' }}>
           Crear Cuenta
