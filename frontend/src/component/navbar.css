@@ -1,0 +1,29 @@
+.navbar {
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(10px);
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 40px;
+  z-index: 1000;
+}
+
+.logo {
+  color: var(--primary);
+}
+
+.navbar ul {
+  display: flex;
+  gap: 25px;
+  list-style: none;
+}
+
+.navbar li {
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.navbar li:hover {
+  color: var(--primary);
+}

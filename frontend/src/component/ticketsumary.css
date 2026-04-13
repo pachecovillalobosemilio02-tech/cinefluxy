@@ -1,0 +1,11 @@
+.summary {
+  background: var(--card);
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+.pay-btn {
+  width: 100%;
+  margin-top: 15px;
+}

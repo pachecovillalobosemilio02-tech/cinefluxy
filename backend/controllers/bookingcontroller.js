@@ -1,0 +1,112 @@
+const db = require('../models/db')
+const { v4: uuidv4 } = require('uuid')
+const QRCode = require('qrcode')
+const nodemailer = require('nodemailer')
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+})
+
+const createBooking = async (req, res) => {
+  const conn = await db.getConnection()
+  try {
+    const { movieId, seats, showtime, total } = req.body
+    const userId = req.user.id
+
+    if (!movieId || !seats?.length || !showtime || !total) {
+      return res.status(400).json({ message: 'Datos de reserva incompletos.' })
+    }
+
+    await conn.beginTransaction()
+
+    const ticketId = 'CX-' + uuidv4().split('-')[0].toUpperCase()
+    const expiresAt = new Date()
+    expiresAt.setHours(expiresAt.getHours() + 4)
+
+    const [bookingResult] = await conn.query(
+      'INSERT INTO bookings (ticket_id, user_id, movie_id, showtime, total, expires_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [ticketId, userId, movieId, showtime, total, expiresAt]
+    )
+    const bookingId = bookingResult.insertId
+
+    for (const seat of seats) {
+      await conn.query(
+        'INSERT INTO booking_seats (booking_id, seat_id, seat_type) VALUES (?, ?, ?)',
+        [bookingId, seat.id, seat.type]
+      )
+    }
+
+    const qrData = `${ticketId}|${movieId}|${showtime}|${seats.map(s => s.id).join(',')}`
+    const qrImage = await QRCode.toDataURL(qrData)
+
+    await conn.query('UPDATE bookings SET qr_code = ? WHERE id = ?', [qrImage, bookingId])
+    await conn.commit()
+
+    const [userRow] = await db.query('SELECT name, email FROM users WHERE id = ?', [userId])
+    const user = userRow[0]
+
+    try {
+      await transporter.sendMail({
+        from: `CineMax <${process.env.EMAIL_USER}>`,
+        to: user.email,
+        subject: `Tu ticket CineMax - ${ticketId}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#0e0e1a;color:#e8e8f0;padding:2rem;border-radius:12px;">
+            <h2 style="color:#c9a84c;font-size:1.6rem;margin-bottom:0.5rem;">CineMax</h2>
+            <p style="color:#6b6b80;margin-bottom:1.5rem;">Tu compra fue procesada exitosamente.</p>
+            <p><strong>Ticket ID:</strong> ${ticketId}</p>
+            <p><strong>Horario:</strong> ${showtime}</p>
+            <p><strong>Asientos:</strong> ${seats.map(s => s.id).join(', ')}</p>
+            <p><strong>Total:</strong> $${total}</p>
+            <p><strong>Valido hasta:</strong> ${expiresAt.toLocaleString('es-MX')}</p>
+            <div style="margin-top:1.5rem;text-align:center;">
+              <img src="${qrImage}" alt="QR Ticket" style="width:160px;height:160px;border-radius:8px;" />
+              <p style="font-size:0.75rem;color:#6b6b80;margin-top:0.5rem;">Presenta este QR al ingresar</p>
+            </div>
+          </div>
+        `
+      })
+    } catch (emailErr) {
+      console.error('Error enviando email:', emailErr.message)
+    }
+
+    res.status(201).json({ ticketId, bookingId, expiresAt, qrCode: qrImage })
+  } catch (err) {
+    await conn.rollback()
+    console.error(err)
+    res.status(500).json({ message: 'Error al crear la reserva.' })
+  } finally {
+    conn.release()
+  }
+}
+
+const validateTicket = async (req, res) => {
+  try {
+    const { id } = req.params
+    const [rows] = await db.query('SELECT * FROM bookings WHERE ticket_id = ?', [id])
+    if (!rows[0]) return res.status(404).json({ valid: false, message: 'Ticket no encontrado.' })
+    const now = new Date()
+    const valid = new Date(rows[0].expires_at) > now
+    res.json({ valid, ticket: rows[0] })
+  } catch (err) {
+    res.status(500).json({ message: 'Error al validar ticket.' })
+  }
+}
+
+const getMyBookings = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      'SELECT b.*, m.title as movie_title FROM bookings b JOIN movies m ON b.movie_id = m.id WHERE b.user_id = ? ORDER BY b.created_at DESC',
+      [req.user.id]
+    )
+    res.json(rows)
+  } catch (err) {
+    res.status(500).json({ message: 'Error al obtener reservas.' })
+  }
+}
+
+module.exports = { createBooking, validateTicket, getMyBookings }

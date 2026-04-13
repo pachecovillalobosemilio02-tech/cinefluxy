@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;600&display=swap');
+
+:root {
+  --primary: #e50914;
+  --bg: #0b0b0f;
+  --card: #1a1a1f;
+  --text: #ffffff;
+  --accent: #f5c518;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* TITULOS */
+h1, h2, h3 {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 2px;
+}
+
+/* BOTONES */
+button {
+  background: var(--primary);
+  border: none;
+  padding: 10px 18px;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: #ff1e1e;
+  transform: scale(1.05);
+}
+
+/* CONTENEDOR */
+.container {
+  padding: 20px 40px;
+}
