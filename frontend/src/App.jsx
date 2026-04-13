@@ -6,7 +6,7 @@ import Register from './pages/Register'
 import Home from './pages/Home'
 import Booking from './pages/Booking'
 import Confirmation from './pages/Confirmation'
-import Navbar from './component/Navbar'
+import Navbar from './component/navbar'
 import Loader from './component/Loader'
 
 export default function App() {
