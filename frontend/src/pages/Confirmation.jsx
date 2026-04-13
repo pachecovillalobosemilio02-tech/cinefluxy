@@ -9,8 +9,7 @@ export default function Confirmation() {
 
   useEffect(() => {
     if (!state) return navigate('/')
-    const t = setTimeout(() => setLoading(false), 1600)
-    return () => clearTimeout(t)
+    setLoading(false)
   }, [state, navigate])
 
   if (loading) {
