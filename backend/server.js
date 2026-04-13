@@ -9,12 +9,17 @@ const app = express()
 const allowedOrigins = [
   'http://localhost:3000',
   process.env.FRONTEND_URL,
-  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null
-].filter(Boolean)
+  ...(process.env.ALLOWED_ORIGINS || '').split(',').map(origin => origin.trim()).filter(Boolean)
+]
+
+const projectSlug = process.env.VERCEL_PROJECT_SLUG || 'cinefluxy'
+const previewOriginPattern = new RegExp(`^https://${projectSlug}(?:-[a-z0-9-]+)?\\.vercel\\.app$`, 'i')
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true)
+    if (!origin || allowedOrigins.includes(origin) || previewOriginPattern.test(origin)) {
+      return callback(null, true)
+    }
     return callback(new Error('Origen no permitido por CORS'))
   },
   credentials: true
