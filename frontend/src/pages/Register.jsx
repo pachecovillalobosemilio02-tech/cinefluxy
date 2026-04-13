@@ -17,7 +17,7 @@ export default function Register({ onLogin }) {
     if (!/\S+@\S+\.\S+/.test(form.email)) return 'Email no valido.'
     if (form.password.length < 6) return 'La contrasena debe tener al menos 6 caracteres.'
     if (!form.birth) return 'Ingresa tu fecha de nacimiento.'
-    if (form.latitude == null || form.longitude == null) return 'Debes compartir tu ubicacion.'
+    if (!form.locationLabel?.trim()) return 'Debes indicar tu ciudad y pais.'
     const age = (new Date() - new Date(form.birth)) / (365.25 * 24 * 3600 * 1000)
     if (age < 18) return 'Debes tener 18 anos o mas para registrarte.'
     return null

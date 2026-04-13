@@ -5,7 +5,7 @@ const userModel = require('../models/userModel')
 const register = async (req, res) => {
   try {
     const { name, email, password, birth, locationLabel, latitude, longitude } = req.body
-    if (!name || !email || !password || !birth || latitude == null || longitude == null) {
+    if (!name || !email || !password || !birth || !locationLabel?.trim()) {
       return res.status(400).json({ message: 'Todos los campos son requeridos.' })
     }
     const age = (new Date() - new Date(birth)) / (365.25 * 24 * 3600 * 1000)
@@ -21,7 +21,7 @@ const register = async (req, res) => {
     const token = jwt.sign({ id: userId, email, name }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES })
     res.status(201).json({
       token,
-      user: { id: userId, name, email, locationLabel, latitude: Number(latitude), longitude: Number(longitude) }
+      user: { id: userId, name, email, locationLabel: locationLabel.trim(), latitude: latitude ?? null, longitude: longitude ?? null }
     })
   } catch (err) {
     console.error(err)
@@ -32,8 +32,8 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password, locationLabel, latitude, longitude } = req.body
-    if (!email || !password || latitude == null || longitude == null) {
-      return res.status(400).json({ message: 'Correo, contrasena y ubicacion requeridos.' })
+    if (!email || !password || !locationLabel?.trim()) {
+      return res.status(400).json({ message: 'Correo, contrasena y ciudad/pais requeridos.' })
     }
     const user = await userModel.findByEmail(email)
     if (!user) {
@@ -51,9 +51,9 @@ const login = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        locationLabel,
-        latitude: Number(latitude),
-        longitude: Number(longitude)
+        locationLabel: locationLabel.trim(),
+        latitude: latitude ?? null,
+        longitude: longitude ?? null
       }
     })
   } catch (err) {

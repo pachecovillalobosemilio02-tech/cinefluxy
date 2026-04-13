@@ -14,7 +14,7 @@ export default function Login({ onLogin }) {
   const validate = () => {
     if (!form.email || !form.password) return 'Completa todos los campos.'
     if (!/\S+@\S+\.\S+/.test(form.email)) return 'Email no valido.'
-    if (form.latitude == null || form.longitude == null) return 'Debes compartir tu ubicacion.'
+    if (!form.locationLabel?.trim()) return 'Debes indicar tu ciudad y pais.'
     return null
   }
 
