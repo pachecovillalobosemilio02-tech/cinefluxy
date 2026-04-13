@@ -3,13 +3,31 @@ const { v4: uuidv4 } = require('uuid')
 const QRCode = require('qrcode')
 const nodemailer = require('nodemailer')
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-})
+const transporterConfig = process.env.SMTP_HOST
+  ? {
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000
+    }
+  : {
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000
+    }
+
+const transporter = nodemailer.createTransport(transporterConfig)
 
 const createBooking = async (req, res) => {
   const conn = await db.getConnection()
@@ -54,9 +72,12 @@ const createBooking = async (req, res) => {
     const user = userRow[0]
     const recipientEmail = deliveryEmail || user.email
 
+    let emailSent = false
+    let emailError = null
+
     try {
       await transporter.sendMail({
-        from: `CineMax <${process.env.EMAIL_USER}>`,
+        from: process.env.EMAIL_FROM || `CineMax <${process.env.EMAIL_USER}>`,
         to: recipientEmail,
         subject: `Tu ticket CineMax - ${ticketId}`,
         html: `
@@ -76,11 +97,21 @@ const createBooking = async (req, res) => {
           </div>
         `
       })
+      emailSent = true
     } catch (emailErr) {
       console.error('Error enviando email:', emailErr.message)
+      emailError = emailErr.message
     }
 
-    res.status(201).json({ ticketId, bookingId, expiresAt, qrCode: qrImage, deliveryEmail: recipientEmail })
+    res.status(201).json({
+      ticketId,
+      bookingId,
+      expiresAt,
+      qrCode: qrImage,
+      deliveryEmail: recipientEmail,
+      emailSent,
+      emailError
+    })
   } catch (err) {
     await conn.rollback()
     console.error(err)
