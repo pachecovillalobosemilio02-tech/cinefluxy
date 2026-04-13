@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { moviesService } from '../services/api'
-import MovieCard from '../component/moviecard'
+import MovieCard from '../component/Moviecard'
 import Loader from '../component/Loader'
 
 const GENRES = ['Todos', 'Sci-Fi', 'Drama', 'Accion', 'Western', 'Terror', 'Animacion']

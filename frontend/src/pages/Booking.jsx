@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { moviesService, bookingService } from '../services/api'
-import SeatSelector, { SEAT_PRICES } from '../component/SeatSelector'
-import TicketSummary from '../component/TicketSummary'
+import SeatSelector, { SEAT_PRICES } from '../component/Seatselector'
+import TicketSummary from '../component/Ticketsummary'
 import Loader from '../component/Loader'
 
 export default function Booking({ user }) {
