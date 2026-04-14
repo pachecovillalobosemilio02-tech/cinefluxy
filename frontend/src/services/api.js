@@ -35,6 +35,7 @@ export const moviesService = {
 export const bookingService = {
   create: (data) => api.post('/booking', data),
   getMyBookings: () => api.get('/booking/mine'),
+  getOccupiedSeats: (movieId, showtime) => api.get(`/booking/occupied?movieId=${movieId}&showtime=${encodeURIComponent(showtime)}`),
   validateTicket: (id) => api.get(`/booking/validate/${id}`)
 }
 

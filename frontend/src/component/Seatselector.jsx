@@ -1,14 +1,10 @@
-import { useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 
 const SEAT_PRICES = { vip: 18, mid: 12, basic: 8 }
 
-const generateSeats = () => {
+const generateSeats = (occupiedSeatIds = []) => {
   const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-  const occupied = new Set([
-    'A-3','A-7','B-5','B-6','C-2','C-9','D-4','D-11',
-    'E-1','E-8','F-3','F-7','G-5','G-10','H-2','H-6',
-    'I-4','I-9','J-1','J-8','B-10','C-4','D-7','E-12','F-9','G-2'
-  ])
+  const occupied = new Set(occupiedSeatIds)
   return rows.map((row, ri) => ({
     row,
     seats: Array.from({ length: 12 }, (_, ci) => {
@@ -17,11 +13,19 @@ const generateSeats = () => {
       return { id, col: ci + 1, type, occupied: occupied.has(id) }
     })
   }))
-}
+})
 
-export default function SeatSelector({ onSelectionChange }) {
-  const [seats] = useState(generateSeats)
+export default function SeatSelector({ onSelectionChange, occupiedSeatIds = [] }) {
   const [selected, setSelected] = useState([])
+  const seats = useMemo(() => generateSeats(occupiedSeatIds), [occupiedSeatIds])
+
+  useEffect(() => {
+    setSelected(prev => {
+      const available = prev.filter((seat) => !occupiedSeatIds.includes(seat.id))
+      onSelectionChange(available)
+      return available
+    })
+  }, [occupiedSeatIds, onSelectionChange])
 
   const toggle = useCallback((seat) => {
     if (seat.occupied) return

@@ -104,6 +104,23 @@ const createBooking = async (req, res) => {
 
     await conn.beginTransaction()
 
+    const seatIds = seats.map((seat) => seat.id)
+    const placeholders = seatIds.map(() => '?').join(', ')
+    const [takenSeats] = await conn.query(
+      `SELECT bs.seat_id
+      FROM bookings b
+      JOIN booking_seats bs ON bs.booking_id = b.id
+      WHERE b.movie_id = ? AND b.showtime = ? AND bs.seat_id IN (${placeholders})`,
+      [movieId, showtime, ...seatIds]
+    )
+
+    if (takenSeats.length) {
+      await conn.rollback()
+      return res.status(409).json({
+        message: `Estos asientos ya no estan disponibles: ${takenSeats.map((seat) => seat.seat_id).join(', ')}.`
+      })
+    }
+
     const ticketId = 'CX-' + uuidv4().split('-')[0].toUpperCase()
     const expiresAt = new Date()
     expiresAt.setHours(expiresAt.getHours() + 4)
@@ -163,7 +180,16 @@ const createBooking = async (req, res) => {
 const validateTicket = async (req, res) => {
   try {
     const { id } = req.params
-    const [rows] = await db.query('SELECT * FROM bookings WHERE ticket_id = ?', [id])
+    const [rows] = await db.query(
+      `SELECT b.*, m.title AS movie_title, m.genre AS movie_genre, m.poster AS movie_poster,
+        GROUP_CONCAT(bs.seat_id ORDER BY bs.seat_id SEPARATOR ', ') AS seats
+      FROM bookings b
+      JOIN movies m ON m.id = b.movie_id
+      LEFT JOIN booking_seats bs ON bs.booking_id = b.id
+      WHERE b.ticket_id = ?
+      GROUP BY b.id, m.title, m.genre, m.poster`,
+      [id]
+    )
     if (!rows[0]) return res.status(404).json({ valid: false, message: 'Ticket no encontrado.' })
     const now = new Date()
     const valid = new Date(rows[0].expires_at) > now
@@ -173,10 +199,49 @@ const validateTicket = async (req, res) => {
   }
 }
 
+const getOccupiedSeats = async (req, res) => {
+  try {
+    const { movieId, showtime } = req.query
+
+    if (!movieId || !showtime) {
+      return res.status(400).json({ message: 'Pelicula y horario requeridos.' })
+    }
+
+    const [rows] = await db.query(
+      `SELECT bs.seat_id
+      FROM bookings b
+      JOIN booking_seats bs ON bs.booking_id = b.id
+      WHERE b.movie_id = ? AND b.showtime = ?`,
+      [movieId, showtime]
+    )
+
+    res.json({ occupiedSeats: rows.map((row) => row.seat_id) })
+  } catch (err) {
+    res.status(500).json({ message: 'Error al obtener asientos ocupados.' })
+  }
+}
+
 const getMyBookings = async (req, res) => {
   try {
     const [rows] = await db.query(
-      'SELECT b.*, m.title as movie_title FROM bookings b JOIN movies m ON b.movie_id = m.id WHERE b.user_id = ? ORDER BY b.created_at DESC',
+      `SELECT
+        b.id,
+        b.ticket_id,
+        b.movie_id,
+        b.showtime,
+        b.total,
+        b.expires_at,
+        b.created_at,
+        m.title AS movie_title,
+        m.poster AS movie_poster,
+        m.genre AS movie_genre,
+        GROUP_CONCAT(bs.seat_id ORDER BY bs.seat_id SEPARATOR ', ') AS seats
+      FROM bookings b
+      JOIN movies m ON b.movie_id = m.id
+      LEFT JOIN booking_seats bs ON bs.booking_id = b.id
+      WHERE b.user_id = ?
+      GROUP BY b.id, b.ticket_id, b.movie_id, b.showtime, b.total, b.expires_at, b.created_at, m.title, m.poster, m.genre
+      ORDER BY b.created_at DESC`,
       [req.user.id]
     )
     res.json(rows)
@@ -185,4 +250,4 @@ const getMyBookings = async (req, res) => {
   }
 }
 
-module.exports = { createBooking, validateTicket, getMyBookings }
+module.exports = { createBooking, validateTicket, getMyBookings, getOccupiedSeats }

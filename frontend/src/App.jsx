@@ -5,6 +5,8 @@ import Register from './pages/Register'
 import Home from './pages/Home'
 import Booking from './pages/Booking'
 import Confirmation from './pages/Confirmation'
+import Account from './pages/Account'
+import ValidateTicket from './pages/ValidateTicket'
 import Navbar from './component/navbar_new'
 import Loader from './component/Loader'
 
@@ -38,6 +40,8 @@ export default function App() {
         <Route path="/login" element={!user ? <Login onLogin={handleLogin} /> : <Navigate to="/" />} />
         <Route path="/register" element={!user ? <Register onLogin={handleLogin} /> : <Navigate to="/" />} />
         <Route path="/" element={user ? <Home /> : <Navigate to="/login" />} />
+        <Route path="/account" element={user ? <Account user={user} /> : <Navigate to="/login" />} />
+        <Route path="/validate-ticket" element={user ? <ValidateTicket /> : <Navigate to="/login" />} />
         <Route path="/booking/:movieId" element={user ? <Booking user={user} /> : <Navigate to="/login" />} />
         <Route path="/confirmation" element={user ? <Confirmation /> : <Navigate to="/login" />} />
       </Routes>

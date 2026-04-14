@@ -19,6 +19,18 @@ export default function Navbar({ user, onLogout }) {
         CINE<span style={{ color: 'var(--text)' }}>FLUXY</span>
       </Link>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <Link to="/account" style={{
+          fontFamily: 'var(--font-mono)', fontSize: '0.78rem',
+          color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em'
+        }}>
+          Mi Cuenta
+        </Link>
+        <Link to="/validate-ticket" style={{
+          fontFamily: 'var(--font-mono)', fontSize: '0.78rem',
+          color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em'
+        }}>
+          Validar Ticket
+        </Link>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--muted)' }}>
           Hola, <strong style={{ color: 'var(--accent)' }}>{user.name}</strong>
         </span>

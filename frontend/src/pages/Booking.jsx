@@ -15,6 +15,7 @@ export default function Booking({ user }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [deliveryEmail, setDeliveryEmail] = useState(user?.email || '')
+  const [occupiedSeatIds, setOccupiedSeatIds] = useState([])
 
   useEffect(() => {
     moviesService.getById(movieId)
@@ -25,6 +26,14 @@ export default function Booking({ user }) {
       .catch(() => navigate('/'))
       .finally(() => setLoading(false))
   }, [movieId, navigate])
+
+  useEffect(() => {
+    if (!movie?.id || !showtime) return
+
+    bookingService.getOccupiedSeats(movie.id, showtime)
+      .then((res) => setOccupiedSeatIds(res.data.occupiedSeats || []))
+      .catch(() => setOccupiedSeatIds([]))
+  }, [movie?.id, showtime])
 
   const total = selected.reduce((sum, s) => sum + SEAT_PRICES[s.type], 0)
 
@@ -44,6 +53,7 @@ export default function Booking({ user }) {
         total,
         deliveryEmail
       })
+      setOccupiedSeatIds(prev => [...new Set([...prev, ...selected.map((seat) => seat.id)])])
       navigate('/confirmation', { state: { booking: res.data, movie, selected, showtime, total, user, deliveryEmail } })
     } catch (e) {
       setError(e.response?.data?.message || 'Error al procesar la compra.')
@@ -97,7 +107,7 @@ export default function Booking({ user }) {
               ))}
             </div>
           </div>
-          <SeatSelector onSelectionChange={setSelected} />
+          <SeatSelector onSelectionChange={setSelected} occupiedSeatIds={occupiedSeatIds} />
         </div>
         <div>
           <TicketSummary movie={movie} selected={selected} showtime={showtime} total={total} SEAT_PRICES={SEAT_PRICES} />
