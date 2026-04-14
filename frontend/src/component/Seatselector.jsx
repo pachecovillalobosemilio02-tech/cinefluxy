@@ -13,7 +13,7 @@ const generateSeats = (occupiedSeatIds = []) => {
       return { id, col: ci + 1, type, occupied: occupied.has(id) }
     })
   }))
-})
+}
 
 export default function SeatSelector({ onSelectionChange, occupiedSeatIds = [] }) {
   const [selected, setSelected] = useState([])
